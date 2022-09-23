@@ -8,7 +8,9 @@ from os.path import join as os_path_join
 from gc import collect as gc_collect
 from ctypes import windll, WinDLL, wintypes
 
-from random import randint
+from win32gui import SetWindowLong, GetWindowLong, SetLayeredWindowAttributes
+from win32con import GWL_EXSTYLE, WS_EX_LAYERED, LWA_COLORKEY
+from win32api import RGB
 
 
 pygame.font.init()
@@ -37,8 +39,8 @@ def font_setup(folder: str, path: str, size: int) -> pygame.font.Font:
 # 'Resources'
 
 
-WIDTH = 250
-HEIGHT = 300
+WIDTH = 260
+HEIGHT = 310
 
 
 COL_BLACK = (7, 5, 2)   #070502
@@ -60,38 +62,6 @@ MODE = 0   # {0: 'light', 1: 'dark'}
 FPS = 30
 
 TOTAL_TIME = 1500
-
-
-class MoveWindowHandler:
-    def __init__(self, start_pos: tuple[int]):
-        self.start_pos = start_pos
-        self.win_coords = [-i for i in self.start_pos]
-        self.isMousePressed = False
-
-    def move_window(self, pos: tuple[int]):
-        # handle to window
-        hwnd = pygame.display.get_wm_info()['window']
-
-        # user32.MoveWindow receives new size for window
-        width, height = pygame.display.get_surface().get_size()
-        windll.user32.MoveWindow(hwnd, -pos[0], -pos[1], width, height, False)
-        del hwnd, width, height
-
-    def onToggle(self, event: pygame.event.Event, mouse_pos: tuple[int]):
-        if event.type == MOUSEBUTTONDOWN and event.button == 1:
-            self.isMousePressed = True
-            self.start_pos = pygame.mouse.get_pos()
-        
-        elif event.type == MOUSEMOTION:
-            if self.isMousePressed:
-                if mouse_pos[1] < pygame.display.get_window_size()[1]*0.2:
-                    new_pos = pygame.mouse.get_pos()
-                    self.win_coords[0] += self.start_pos[0] - new_pos[0]
-                    self.win_coords[1] += self.start_pos[1] - new_pos[1]
-                    self.move_window(self.win_coords)
-        
-        elif event.type == MOUSEBUTTONUP:
-            self.isMousePressed = False
 
 
 class Menu:   # directly reads & modifies config.ini (pending)
@@ -233,10 +203,10 @@ class SettingButton:
     def isMouseOn(self, window: pygame.Surface, event: pygame.event.Event, mouse_pos: tuple[int]):
         if event.type == MOUSEBUTTONDOWN and event.button == 1:
             if not self.isToggled:
-                if self.render(window).collidepoint(mouse_pos):
+                if self.render(window).collidepoint(mouse_pos) and self.progress == 0:
                     self.isToggled = True
             else:
-                if mouse_pos[1] < 100:
+                if mouse_pos[1] < 100 and self.progress == 200:
                     self.isToggled = False
 
     def onToggle(self, window: pygame.Surface, status: bool):
@@ -248,9 +218,13 @@ class SettingButton:
         if status:
             if self.progress < 200:
                 self.progress += 20
+            else:
+                self.progress = 200
         else:
             if self.progress > 0:
                 self.progress -= 20
+            else:
+                self.progress = 0
 
     
 class Number:
@@ -277,7 +251,7 @@ class Colon:
 
     def render(self, window: pygame.Surface):
         text = self.font.render(':', True, COL_MOCHA).convert_alpha()
-        text_rect = text.get_rect(center=([i//2 for i in pygame.display.get_window_size()]))
+        text_rect = text.get_rect(center=([i//2 for i in window.get_size()]))
         window.blit(text, text_rect)
         del text, text_rect
 
@@ -347,13 +321,65 @@ class StatsButton:
         ...
 
 
+class MoveWindowHandler:
+    def __init__(self, start_pos: tuple[int]):
+        self.start_pos = start_pos
+        self.win_coords = [-i for i in self.start_pos]
+        self.isMousePressed = False
+
+    def move_window(self, pos: tuple[int]):
+        # handle to window
+        hwnd = pygame.display.get_wm_info()['window']
+
+        # user32.MoveWindow receives new size for window
+        width, height = pygame.display.get_surface().get_size()
+        windll.user32.MoveWindow(hwnd, -pos[0], -pos[1], width, height, False)
+        del hwnd, width, height
+
+    def onToggle(self, window: pygame.Surface, event: pygame.event.Event, mouse_pos: tuple[int], SettingButton: SettingButton):
+        if event.type == MOUSEBUTTONDOWN and event.button == 1 and not SettingButton.render(window).collidepoint(mouse_pos):
+            self.isMousePressed = True
+            self.start_pos = pygame.mouse.get_pos()
+        
+        elif event.type == MOUSEMOTION:
+            if self.isMousePressed:
+                if mouse_pos[1] < pygame.display.get_window_size()[1]*0.2:
+                    new_pos = pygame.mouse.get_pos()
+                    self.win_coords[0] += self.start_pos[0] - new_pos[0]
+                    self.win_coords[1] += self.start_pos[1] - new_pos[1]
+                    self.move_window(self.win_coords)
+        
+        elif event.type == MOUSEBUTTONUP:
+            self.isMousePressed = False
+
+
 class App:
     def __init__(self):
-        self.place_pos = (pygame.display.get_desktop_sizes()[0][0]-300, 50)   # 50px from top right corner
+        self.place_pos = (pygame.display.get_desktop_sizes()[0][0]-310, 50)   # 50px from top right corner
         environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % self.place_pos
         pygame.display.set_caption('focus()')
 
-        self.window = pygame.display.set_mode((WIDTH, HEIGHT), pygame.NOFRAME)
+        icon = pygame.Surface((32, 32), pygame.SRCALPHA)
+        rectvalues = [pos + (2, 10) for pos in ((12, 2), (18, 2), (12, 18), (18, 18))] + [pos + (10, 2) for pos in ((4, 12), (18, 12), (4, 18), (18, 18))]
+        for rectvalue in rectvalues:
+            pygame.draw.rect(icon, COL_MOCHA, rectvalue)
+        pygame.display.set_icon(icon)
+        del icon, rectvalues
+
+        self.BigWindow = pygame.display.set_mode((WIDTH, HEIGHT), pygame.NOFRAME)
+
+        fuchsia = (0, 0, 0)
+        hwnd = pygame.display.get_wm_info()['window']
+        SetWindowLong(hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED)
+        SetLayeredWindowAttributes(hwnd, RGB(*fuchsia), 0, LWA_COLORKEY)
+        self.BigWindow.fill(fuchsia)
+        del hwnd, fuchsia
+
+        decoywindow = pygame.Surface((250, 300))
+        decoywindow.fill(COL_HEAVYCREAM)
+        self.window = pygame.Surface((250, 300))
+        self.BigWindow.blit(decoywindow, (10, 10))
+        del decoywindow
 
         self.MoveWindowHandler = MoveWindowHandler(self.place_pos)
         del self.place_pos
@@ -379,11 +405,12 @@ class App:
         self.FPS_clock = pygame.time.Clock()
 
     def render(self, window: pygame.Surface, SysButtons: list[SysButton], SettingButton: SettingButton, Numbers: list[Number], Colon: Colon, MainButton: MainButton):
-        self.isMenuToggled = self.SettingButton.isToggled
+        self.isMenuToggled = SettingButton.isToggled
+
         window.fill(COL_WHIP)
         pygame.draw.polygon(window, COL_HEAVYCREAM, ((0, 0), (0, 60), (90, 60), (150, 0)))
         
-        if self.isMenuToggled:
+        if self.SettingButton.isToggled:
             SettingButton.onToggle(window, True)
 
         else:
@@ -401,7 +428,9 @@ class App:
 
         SettingButton.render(window)
 
-    def handle_mouse(self, window: pygame.Surface, event: pygame.event.Event, mouse_pos: tuple[int], SysButtons: list[SysButton], SettingButton: SettingButton, MainButton: MainButton):
+        self.BigWindow.blit(window, (0, 0))
+
+    def handle_mouse(self, window: pygame.Surface, event: pygame.event.Event, mouse_pos: tuple[int], SysButtons: list[SysButton], SettingButton: SettingButton, MainButton: MainButton, MoveWindowHandler: MoveWindowHandler):
         if pygame.mouse.get_focused():
 
             SettingButton.isMouseOn(window, event, mouse_pos)
@@ -410,7 +439,7 @@ class App:
 
             if not self.isMenuToggled:
 
-                self.MoveWindowHandler.onToggle(event, mouse_pos)
+                MoveWindowHandler.onToggle(window, event, mouse_pos, SettingButton)
 
                 for SysButton in SysButtons:
                     if SysButton.isMouseOn(window, event, mouse_pos):
@@ -429,8 +458,6 @@ class App:
         # space for mainbutton
 
     def main(self):
-        self.MoveWindowHandler.move_window(self.MoveWindowHandler.win_coords)
-
         while 1:
             self.FPS_clock.tick(FPS)
 
@@ -444,7 +471,9 @@ class App:
                     pygame.quit()
                     sys_exit()
 
-                self.handle_mouse(self.window, event, mouse_pos, [self.SysButton_0, self.SysButton_1, self.SysButton_2], self.SettingButton, self.MainButton)
+                self.MoveWindowHandler.move_window(self.MoveWindowHandler.win_coords)
+
+                self.handle_mouse(self.window, event, mouse_pos, [self.SysButton_0, self.SysButton_1, self.SysButton_2], self.SettingButton, self.MainButton, self.MoveWindowHandler)
                 pygame.event.clear()
 
             self.handle_key(pygame.key.get_pressed(), self.MainButton)
