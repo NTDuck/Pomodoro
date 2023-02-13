@@ -7,12 +7,7 @@ from configparser import ConfigParser
 from pygame import gfxdraw
 from pygame.locals import MOUSEBUTTONDOWN
 
-from globals import *
-
-
-class Config:
-    def __init__(self) -> None:
-        ...
+from utils.globals import *
 
 
 class FirstSideSystemButton:
@@ -173,7 +168,7 @@ class SecondSideDisplayNumber:
 
 class SecondSideDisplayBlockNumber:
     
-    def __init__(self, spritePosition: tuple[int, int], spriteType: str, colorRGBValue: tuple[int, int, int], configFile: ConfigParser, SecondSideDisplayNumber0: SecondSideDisplayNumber, SecondSideDisplayNumber1: SecondSideDisplayNumber) -> None:
+    def __init__(self, spritePosition: tuple[int, int], spriteType: str, colorRGBValue: tuple[int, int, int], configFile: ConfigParser) -> None:
         self.spritePosition = spritePosition
         self.spriteType = spriteType   # config.ini variable
         self.colorRGBValue = colorRGBValue
@@ -184,11 +179,8 @@ class SecondSideDisplayBlockNumber:
         self.displayImage = pygame.Surface((63, 32), pygame.SRCALPHA).convert_alpha()
         pygame.draw.rect(self.displayImage, self.colorRGBValue, (0, 0, 10, 32))
 
-        self.SecondSideDisplayNumber0 = SecondSideDisplayNumber0
-        self.SecondSideDisplayNumber1 = SecondSideDisplayNumber1
-
-        # self.SecondSideDisplayNumber0 = SecondSideDisplayNumber((self.spritePosition[0]+31, self.spritePosition[1]+16), COLOR_BACKGROUND, 30, int(self.spriteValue[0]))
-        # self.SecondSideDisplayNumber1 = SecondSideDisplayNumber((self.spritePosition[0]+47, self.spritePosition[1]+16), COLOR_BACKGROUND, 30, int(self.spriteValue[1]))
+        self.SecondSideDisplayNumber0 = SecondSideDisplayNumber((self.spritePosition[0]+31, self.spritePosition[1]+16), COLOR_BACKGROUND, 30, int(self.spriteValue[0]))
+        self.SecondSideDisplayNumber1 = SecondSideDisplayNumber((self.spritePosition[0]+47, self.spritePosition[1]+16), COLOR_BACKGROUND, 30, int(self.spriteValue[1]))
 
     def render(self, displayWindow: pygame.Surface) -> None:
         pygame.draw.rect(self.displayImage, COLOR_SECONDARY, (15, 0, 48, 32))

@@ -1,11 +1,13 @@
 
-import socket
+import gc
 
 from win32gui import SetWindowLong, GetWindowLong, SetLayeredWindowAttributes, SetWindowPos, EnableWindow
 from win32con import GWL_EXSTYLE, WS_EX_LAYERED, LWA_COLORKEY
 from win32api import RGB
 
-from utils import *
+from pygame.locals import QUIT
+
+from utils.utils import *
 
 
 class ControlTimerFunctions:
@@ -183,7 +185,7 @@ class ControlMainFunctions:
         SecondSideSaveButton: SecondSideSaveButton,
         SecondSideResetButton: SecondSideResetButton,
         SecondSideAboutButton: SecondSideAboutButton,
-        DefaultTimeTracker: pygame.time.Clock,
+        DaemonGlobal: pygame.time.Clock,
         displayWindowDeviation: int,   # 10
         transparentColorRGBValue: tuple[int, int, int]   # (0, 0, 0)
     ) -> None:   # create instances? no, that's done in main.py
@@ -204,7 +206,7 @@ class ControlMainFunctions:
         self.SecondSideSaveButton = SecondSideSaveButton
         self.SecondSideResetButton = SecondSideResetButton
         self.SecondSideAboutButton = SecondSideAboutButton
-        self.DefaultTimeTracker = DefaultTimeTracker
+        self.DaemonGlobal = DaemonGlobal
         
         self.displayWindowMaster, self.displayWindowMain = self.ControlOtherFunctions.createTwoDisplayWindows(displayWindowDeviation, transparentColorRGBValue)
 
@@ -255,14 +257,55 @@ class ControlMainFunctions:
                 for FirstSideSprite in (self.FirstSidePlayPauseButton, self.BothSideSettingButton):
                     FirstSideSprite.isMouseRightClicked(displayWindow, event, currentMousePosition)
 
-                for SecondSideSprite in self.SecondSideDisplayBlockNumbers:
-                    SecondSideSprite.resetChangesIfNotSaved()
+                for SecondSideDisplayBlockNumber in self.SecondSideDisplayBlockNumbers:
+                    SecondSideDisplayBlockNumber.resetChangesIfNotSaved()
 
-            
+                for SecondSideDisplayBlockBool in self.SecondSideDisplayBlockBools:
+                    SecondSideDisplayBlockBool.resetChangesIfNotSaved()
 
+            else:
+                
+                for SecondSideDisplayBlockNumber in self.SecondSideDisplayBlockNumbers:
+                    SecondSideDisplayBlockNumber.isMouseRightClicked(displayWindow, event, currentMousePosition)
 
-    def masterControlKeyboardInputs(self) -> None:
-        ...
+                for SecondSideDisplayBlockBool in self.SecondSideDisplayBlockBools:
+                    SecondSideDisplayBlockBool.isMouseRightClicked(displayWindow, event, currentMousePosition)
+
+                for SecondSideSprite in (self.SecondSideSaveButton, self.SecondSideResetButton):
+                    SecondSideSprite.isMouseRightClicked(displayWindow, event, currentMousePosition, self.SecondSideDisplayBlockNumbers, self.SecondSideDisplayBlockBools)
+                
+                self.SecondSideAboutButton.isMouseRightClicked(displayWindow, event, currentMousePosition)
+
+    def masterControlKeyboardInputs(self, eventKey: pygame.key.ScancodeWrapper) -> None:
+        
+        if all((eventKey, self.FirstSidePlayPauseButton.isKeyReady)):
+
+            for boolValue in (self.FirstSidePlayPauseButton.isOnPause, self.FirstSidePlayPauseButton.isKeyReady):
+                boolValue ^= True
 
     def masterControlRuntime(self) -> None:
-        ...
+        
+        while 1:   # used instead of `True`
+            
+            self.DaemonGlobal.tick(FPS)
+            events = pygame.event.get()
+            currentMousePosition = pygame.mouse.get_pos()
+
+            self.masterRender(self.displayWindowMain)
+
+            for event in events:
+
+                if event.type == QUIT:
+
+                    pygame.quit()
+                    sys.exit()
+
+                self.masterControlMouse(self.displayWindowMain, event, currentMousePosition)
+        
+            pygame.event.clear()   # originally in for loop
+        
+            self.masterControlKeyboardInputs(pygame.key.get_pressed())
+
+            pygame.display.update()
+
+            gc.collect()
