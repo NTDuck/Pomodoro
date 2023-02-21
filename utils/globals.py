@@ -1,5 +1,6 @@
 
 import os
+from configparser import ConfigParser
 
 
 WIDTH = 250
@@ -8,12 +9,12 @@ HEIGHT = 300
 FPS = 15
 
 CONFIG_DEFAULT_VALUES = {
-    'work': '1500',
-    'short_break': '300',
-    'long_break': '1800',
-    'interval': '4',
-    'isautoswitch': '0',
-    'issoundon': '0'
+    "work": "1500",
+    "shortBreak": "300",
+    "longBreak": "1800",
+    "interval": "4",
+    "isAutoSwitchOn": "0",
+    "isSoundOn": "0"
 }
 
 COLOR_PRIMARY = (56, 42, 29)   #382a1d | mocha
@@ -24,7 +25,7 @@ COLOR_MACOS_RED = (255, 96, 92)   #ff605c | sunset orange
 COLOR_MACOS_YELLOW = (255, 189, 68)   #ffbd44 | pastel orange
 COLOR_MACOS_GREEN = (0, 202, 78)   #00ca4e | malachite
 
-BASE_DIR = os.path.join("E:", "Programming", "Python", "Project Pomodoro")
+BASE_DIR = os.path.join("Python", "Project Pomodoro")
 
 CONFIG_PATH = os.path.join(BASE_DIR, "configs", "config.ini")
 FONT_PATH = os.path.join(BASE_DIR, "fonts", "JetBrainsMonoNL-Bold.ttf")
@@ -33,3 +34,11 @@ CONTROL_PATH = os.path.join(BASE_DIR, "utils", "control.py")
 UTILS_PATH = os.path.join(BASE_DIR, "utils", "utils.py")
 
 ABOUT_ADDRESS = "https://www.buymeacoffee.com/ntduck"
+
+configFileValueTimeLengths = [0, 0, 0]
+configFileValueInterval = 0
+configFileValueIsAutoSwitchOn = 0
+configFileValueIsSoundOn = 0
+
+
+CONFIGPARSER = ConfigParser()

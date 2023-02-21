@@ -1,7 +1,7 @@
 
 import gc
 
-from win32gui import SetWindowLong, GetWindowLong, SetLayeredWindowAttributes, SetWindowPos, EnableWindow
+from win32gui import SetWindowLong, GetWindowLong, SetLayeredWindowAttributes, SetWindowPos
 from win32con import GWL_EXSTYLE, WS_EX_LAYERED, LWA_COLORKEY
 from win32api import RGB
 
@@ -13,6 +13,7 @@ from utils.utils import *
 class ControlTimerFunctions:
 
     def __init__(self) -> None:
+
         self.currentTotalSeconds = configFileValueTimeLengths[0]
         self.trackerPreviousMode = 0   # 0: "work" | 1: "shortBreak"
         self.trackerInterval = 0
@@ -58,80 +59,89 @@ class ControlTimerFunctions:
 
 class ControlOtherFunctions:
 
-    def __init__(self, configFile: ConfigParser) -> None:
-        self.configFile = configFile
-        self.displayWindowPosition = (pygame.display.get_desktop_sizes()[0][0]-310, 50)   # 50 px from top right corner
+    def __init__(self) -> None:
+        self.displayWindowPosition = (pygame.display.get_desktop_sizes()[0][0] - 310, 50)   # 50 px from top right corner
 
-    def resetConfigFileToDefault(self) -> None:   # called if config.ini is messed up
+    @staticmethod
+    def initializeImportedPygameModules() -> None:
+        ...
+
+    def resetConfigFileToDefault(self) -> None:   # called if config.ini is messed up | UPDATE 02/21/22: function not called, don't know why
 
         try:
 
-            self.configFile.read(CONFIG_PATH)
+            CONFIGPARSER.read(CONFIG_PATH)
 
         except:
             
-            self.configFile.clear()
+            CONFIGPARSER.clear()
 
-            self.configFile.add_section("numberValues")
+            CONFIGPARSER.add_section("numberValues")
             for configFileOption in tuple(CONFIG_DEFAULT_VALUES.keys())[0:4]:
-                self.configFile.set("timeValues", configFileOption, CONFIG_DEFAULT_VALUES[configFileOption])
+                CONFIGPARSER.set("numberValues", configFileOption, CONFIG_DEFAULT_VALUES[configFileOption])
             
-            self.configFile.add_section("boolValues")
+            CONFIGPARSER.add_section("boolValues")
             for configFileOption in tuple(CONFIG_DEFAULT_VALUES.keys())[4:6]:
-                self.configFile.set("boolValues", configFileOption, CONFIG_DEFAULT_VALUES[configFileOption])
+                CONFIGPARSER.set("boolValues", configFileOption, CONFIG_DEFAULT_VALUES[configFileOption])
 
         else:
 
-            for configFileSection in ("timeValues", "boolValues"):
-                if not self.configFile.has_section(configFileSection):
-                    self.configFile.add_section(configFileSection)
+            for configFileSection in ("numberValues", "boolValues"):
+                if not CONFIGPARSER.has_section(configFileSection):
+                    CONFIGPARSER.add_section(configFileSection)
 
-            for configFileSection in self.configFile.sections():
+            for configFileSection in CONFIGPARSER.sections():
 
-                if configFileSection == "timeValues":
+                if configFileSection == "numberValues":
 
                     for configFileOption in tuple(CONFIG_DEFAULT_VALUES.keys())[0:4]:
-                        if not self.configFile.has_option(configFileSection, configFileOption):
-                            self.configFile.set(configFileSection, configFileOption, CONFIG_DEFAULT_VALUES[configFileOption])
+                        if not CONFIGPARSER.has_option(configFileSection, configFileOption):
+                            CONFIGPARSER.set(configFileSection, configFileOption, CONFIG_DEFAULT_VALUES[configFileOption])
 
-                    for (configFileOption, configFileValue) in self.configFile.items(configFileSection):
+                    for (configFileOption, configFileValue) in CONFIGPARSER.items(configFileSection):
                         if configFileOption in tuple(CONFIG_DEFAULT_VALUES.keys())[0:3]:
                             if any((not configFileValue.isnumeric(), int(configFileValue) < 60, int(configFileValue) > 5940)):
-                                self.configFile.set(configFileSection, configFileOption, CONFIG_DEFAULT_VALUES[configFileOption])
+                                CONFIGPARSER.set(configFileSection, configFileOption, CONFIG_DEFAULT_VALUES[configFileOption])
                         elif configFileOption == tuple(CONFIG_DEFAULT_VALUES.keys())[3]:
                             if any((not configFileValue.isnumeric(), int(configFileValue) < 1, int(configFileValue) > 99)):
-                                self.configFile.set(configFileSection, configFileValue, CONFIG_DEFAULT_VALUES[configFileOption])
+                                CONFIGPARSER.set(configFileSection, configFileValue, CONFIG_DEFAULT_VALUES[configFileOption])
                         else:
-                            self.configFile.remove_option(configFileSection, configFileOption)
+                            CONFIGPARSER.remove_option(configFileSection, configFileOption)
 
                 elif configFileSection == "boolValues":
 
                     for configFileOption in tuple(CONFIG_DEFAULT_VALUES.keys())[4:6]:
-                        if not self.configFile.has_option(configFileSection, configFileOption):
-                            self.configFile.set(configFileSection, configFileOption, CONFIG_DEFAULT_VALUES[configFileOption])
+                        if not CONFIGPARSER.has_option(configFileSection, configFileOption):
+                            CONFIGPARSER.set(configFileSection, configFileOption, CONFIG_DEFAULT_VALUES[configFileOption])
 
-                    for (configFileOption, configFileValue) in self.configFile.items(configFileSection):
+                    for (configFileOption, configFileValue) in CONFIGPARSER.items(configFileSection):
                         if configFileOption in tuple(CONFIG_DEFAULT_VALUES.keys())[4:6]:
                             if any((not configFileValue.isnumeric(), configFileValue not in ("0", "1"))):
-                                self.configFile.set(configFileSection, configFileOption, CONFIG_DEFAULT_VALUES[configFileOption])
+                                CONFIGPARSER.set(configFileSection, configFileOption, CONFIG_DEFAULT_VALUES[configFileOption])
                         else:
-                            self.configFile.remove_option(configFileSection, configFileOption)
+                            CONFIGPARSER.remove_option(configFileSection, configFileOption)
                 
                 else:
 
-                    self.configFile.remove_section(configFileSection)
+                    CONFIGPARSER.remove_section(configFileSection)
 
         finally:
 
             with open(CONFIG_PATH, "w") as modifiedConfigFile:
-                self.configFile.write(modifiedConfigFile)
+                CONFIGPARSER.write(modifiedConfigFile)
+
+        print("Config rewritten")
 
         global configFileValueTimeLengths, configFileValueInterval, configFileValueIsAutoSwitchOn, configFileValueIsSoundOn
 
-        configFileValueTimeLengths = [self.configFile.getint("timeValues", configFileOption) for configFileOption in tuple(CONFIG_DEFAULT_VALUES.keys())[0:3]]
-        configFileValueInterval = self.configFile.getint("timeValues", tuple(CONFIG_DEFAULT_VALUES.keys())[3])
-        configFileValueIsAutoSwitchOn = self.configFile.getboolean("boolValues", tuple(CONFIG_DEFAULT_VALUES.keys())[4])
-        configFileValueIsSoundOn = self.configFile.getboolean("boolValues", tuple(CONFIG_DEFAULT_VALUES.keys())[5])
+        configFileValueTimeLengths = [CONFIGPARSER.getint("numberValues", configFileOption) for configFileOption in tuple(CONFIG_DEFAULT_VALUES.keys())[0:3]]
+        configFileValueInterval = CONFIGPARSER.getint("numberValues", tuple(CONFIG_DEFAULT_VALUES.keys())[3])
+        configFileValueIsAutoSwitchOn = CONFIGPARSER.getboolean("boolValues", tuple(CONFIG_DEFAULT_VALUES.keys())[4])
+        configFileValueIsSoundOn = CONFIGPARSER.getboolean("boolValues", tuple(CONFIG_DEFAULT_VALUES.keys())[5])
+
+        print("values saved to global (manual)")
+
+        print(configFileValueTimeLengths, configFileValueInterval, configFileValueIsAutoSwitchOn, configFileValueIsSoundOn)
 
     def setDisplayWindowPosition(self) -> None:
         os.environ["SDL_VIDEO_WINDOW_POS"] = "%d, %d" % self.displayWindowPosition
@@ -155,7 +165,17 @@ class ControlOtherFunctions:
 
         pygame.display.set_icon(displayIcon)
 
-    def createTwoDisplayWindows(self, displayWindowDeviation: int, transparentColorRGBValue: tuple[int, int, int]) -> tuple[pygame.Surface, pygame.Surface]:
+    def setDisplayWindowCaption(self, displayWindowCaption: str) -> None:
+        return pygame.display.set_caption(displayWindowCaption)
+
+    def createTwoDisplayWindows(self, displayWindowDeviation: int, displayWindowCaption: str, iconColorRGBValue: tuple[int, int, int], transparentColorRGBValue: tuple[int, int, int]) -> tuple[pygame.Surface, pygame.Surface]:
+
+        print("function createTwoDisplayWindows called")
+
+        self.resetConfigFileToDefault()
+        self.setDisplayWindowPosition()
+        self.createDesktopIcon(iconColorRGBValue)
+        self.setDisplayWindowCaption(displayWindowCaption)
 
         displayWindowMaster = pygame.display.set_mode([displayWindowDimension + displayWindowDeviation for displayWindowDimension in (WIDTH, HEIGHT)], pygame.NOFRAME)
         displayWindowMain = pygame.Surface((WIDTH, HEIGHT)).convert_alpha()
@@ -168,6 +188,7 @@ class ControlOtherFunctions:
         displayWindowMaster.blit(displayWindowDecoy, (displayWindowDeviation, displayWindowDeviation))
 
         return (displayWindowMaster, displayWindowMain)
+
 
 class ControlMainFunctions:
 
@@ -187,14 +208,16 @@ class ControlMainFunctions:
         SecondSideAboutButton: SecondSideAboutButton,
         DaemonGlobal: pygame.time.Clock,
         displayWindowDeviation: int,   # 10
+        displayWindowCaption: str,
+        iconColorRGBValue: tuple[int, int, int],
         transparentColorRGBValue: tuple[int, int, int]   # (0, 0, 0)
     ) -> None:   # create instances? no, that's done in main.py
+
+        self.ControlOtherFunctions = ControlOtherFunctions
         
-        pygame.font.init()
-        pygame.init()
+        self.displayWindowMaster, self.displayWindowMain = self.ControlOtherFunctions.createTwoDisplayWindows(displayWindowDeviation, displayWindowCaption, iconColorRGBValue, transparentColorRGBValue)
 
         self.ControlTimerFunctions = ControlTimerFunctions
-        self.ControlOtherFunctions =  ControlOtherFunctions
         self.FirstSideSystemButtons = FirstSideSystemButtons
         self.BothSideSettingButton = BothSideSettingsButton
         self.FirstSideDisplayNumbers = FirstSideDisplayNumbers
@@ -207,8 +230,6 @@ class ControlMainFunctions:
         self.SecondSideResetButton = SecondSideResetButton
         self.SecondSideAboutButton = SecondSideAboutButton
         self.DaemonGlobal = DaemonGlobal
-        
-        self.displayWindowMaster, self.displayWindowMain = self.ControlOtherFunctions.createTwoDisplayWindows(displayWindowDeviation, transparentColorRGBValue)
 
     def masterRender(self, displayWindow: pygame.Surface) -> None:
         

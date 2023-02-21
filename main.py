@@ -3,11 +3,13 @@ from utils.control import *
 
 
 def main():
+    
+    pygame.font.init()
+    pygame.init()
 
-    configFile = ConfigParser()
-
+    ControlOtherFunctionsInstance = ControlOtherFunctions()   # executed first to get global variable `configFileValueTimeLengths`
+    
     ControlTimerFunctionsInstance = ControlTimerFunctions()
-    ControlOtherFunctionsInstance = ControlOtherFunctions(configFile)
     FirstSideSystemButtonInstances = (
         FirstSideSystemButton((25, 25), 0, COLOR_MACOS_RED),
         FirstSideSystemButton((40, 25), 1, COLOR_MACOS_YELLOW),
@@ -24,10 +26,10 @@ def main():
     FirstSidePlayPauseButtonInstance = FirstSidePlayPauseButton((109, 243), COLOR_PRIMARY)
     FirstSideSkipButtonInstance = FirstSideSkipButton((193, 243), COLOR_PRIMARY)
     SecondSideDisplayBlockNumberInstances = (
-        SecondSideDisplayBlockNumber((35, 92), "work", COLOR_MACOS_RED, configFile),
-        SecondSideDisplayBlockNumber((50, 139), "shortBreak", COLOR_MACOS_RED, configFile),
-        SecondSideDisplayBlockNumber((35, 186), "longBreak", COLOR_MACOS_RED, configFile),
-        SecondSideDisplayBlockNumber((135, 92), "interval", COLOR_MACOS_RED, configFile)
+        SecondSideDisplayBlockNumber((35, 92), "work", COLOR_MACOS_RED),
+        SecondSideDisplayBlockNumber((50, 139), "shortBreak", COLOR_MACOS_RED),
+        SecondSideDisplayBlockNumber((35, 186), "longBreak", COLOR_MACOS_RED),
+        SecondSideDisplayBlockNumber((135, 92), "interval", COLOR_MACOS_RED)
     )
     SecondSideDisplayBlockBoolInstances = (
         SecondSideDisplayBlockBool((150, 139), COLOR_SECONDARY, "isAutoSwitchOn"),
@@ -55,6 +57,8 @@ def main():
         SecondSideAboutButton=SecondSideAboutButtonInstance,
         DaemonGlobal=Daemon,
         displayWindowDeviation=10,
+        displayWindowCaption="POM",
+        iconColorRGBValue=COLOR_MACOS_YELLOW,
         transparentColorRGBValue=(0, 0, 0)
     )
 

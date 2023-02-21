@@ -2,8 +2,6 @@
 import sys, webbrowser
 import pygame
 
-from configparser import ConfigParser
-
 from pygame import gfxdraw
 from pygame.locals import MOUSEBUTTONDOWN
 
@@ -42,13 +40,13 @@ class BothSideSettingsButton:
         self.spritePosition = spritePosition
         self.colorRGBValue = colorRGBValue
 
-        self.displayImageFirstSide = pygame.Surface((32, 32), pygame.SRCALPHA).convert_alpha()
+        self.displayImageFirstSide = pygame.Surface((32, 32), pygame.SRCALPHA)
 
         rectValues = [_pointPosition + (8, 8) for _pointPosition in ((0, 0), (12, 0), (24, 0), (0, 12), (12, 12), (24, 12), (0, 24), (12, 24), (24, 24))]
         for _rectValue in rectValues:
             pygame.draw.rect(self.displayImageFirstSide, self.colorRGBValue, _rectValue)
 
-        self.displayImageSecondSide = pygame.Surface((31.5, 31.5), pygame.SRCALPHA).convert_alpha()
+        self.displayImageSecondSide = pygame.Surface((31.5, 31.5), pygame.SRCALPHA)
 
         rectValues = [_pointPosition + (17.5, 3.5) for _pointPosition in ((0, 3.5), (14, 14), (14, 24.5))] + [_pointPosition + (10.5, 3.5) for _pointPosition in ((21, 3.5), (0, 14), (0, 24.5))] + [_pointPosition + (3.5, 10.5) for _pointPosition in ((21, 0), (7, 10.5), (14, 21))]
         for _rectValue in rectValues:
@@ -75,7 +73,7 @@ class FirstSideDisplayNumber:
 
     def render(self, displayWindow: pygame.Surface, currentTotalSeconds: int) -> pygame.Rect:
         convertTo4DigitString = lambda currentTotalSeconds: f"{currentTotalSeconds // 60:02d}{currentTotalSeconds % 60:02d}"[self.spriteOrder]
-        displayText = self.font.render(convertTo4DigitString(currentTotalSeconds), True, self.colorRGBValue).convert_alpha()
+        displayText = self.font.render(convertTo4DigitString(currentTotalSeconds), True, self.colorRGBValue)
         displayTextRect = displayText.get_rect(center = self.spritePosition)
         return displayWindow.blit(displayText, displayTextRect)
 
@@ -88,7 +86,7 @@ class FirstSideDisplayColon:
         self.font = pygame.font.Font(FONT_PATH, spriteSize)   # 80
 
     def render(self, displayWindow: pygame.Surface) -> pygame.Rect:
-        displayText = self.font.render(":", True, self.colorRGBValue).convert_alpha()
+        displayText = self.font.render(":", True, self.colorRGBValue)
         displayTextRect = displayText.get_rect(center=self.spritePosition)
         return displayWindow.blit(displayText, displayTextRect)
 
@@ -99,11 +97,11 @@ class FirstSidePlayPauseButton:
         self.spritePosition = spritePosition
         self.colorRGBValue = colorRGBValue
 
-        self.displayImagePlay = pygame.Surface((32, 32), pygame.SRCALPHA).convert_alpha()
+        self.displayImagePlay = pygame.Surface((32, 32), pygame.SRCALPHA)
         for _rectValue in ((2, 0, 9.5, 32), (20.5, 0, 9.5, 32)):
             pygame.draw.rect(self.displayImagePlay, self.colorRGBValue, _rectValue)
         
-        self.displayImagePause = pygame.Surface((32, 32), pygame.SRCALPHA).convert_alpha()
+        self.displayImagePause = pygame.Surface((32, 32), pygame.SRCALPHA)
         gfxdraw.aapolygon(self.displayImagePause, ((3, 0), (29, 16), (3, 32)), self.colorRGBValue)
         gfxdraw.filled_polygon(self.displayImagePause, ((3, 0), (29, 16), (3, 32)), self.colorRGBValue)
 
@@ -125,7 +123,7 @@ class FirstSideSkipButton:
         self.spritePosition = spritePosition
         self.colorRGBValue = colorRGBValue
 
-        self.displayImage = pygame.Surface((32, 32), pygame.SRCALPHA).convert_alpha()
+        self.displayImage = pygame.Surface((32, 32), pygame.SRCALPHA)
         gfxdraw.aapolygon(self.displayImage, ((0, 0), (22.5, 16), (0, 32)), self.colorRGBValue)
         gfxdraw.filled_polygon(self.displayImage, ((0, 0), (22.5, 16), (0, 32)), self.colorRGBValue)
         pygame.draw.rect(self.displayImage, self.colorRGBValue, (26.5, 0, 5.5, 32))
@@ -153,7 +151,7 @@ class SecondSideDisplayNumber:
         # really need to decide if val in our val out. make both numbers similar.
 
     def render(self, displayWindow: pygame.Surface) -> pygame.Rect:
-        displayText = self.font.render(str(self.spriteValue), True, self.colorRGBValue).convert_alpha()
+        displayText = self.font.render(str(self.spriteValue), True, self.colorRGBValue)
         displayTextRect = displayText.get_rect(center=self.spritePosition)
         return displayWindow.blit(displayText, displayTextRect)
 
@@ -168,19 +166,19 @@ class SecondSideDisplayNumber:
 
 class SecondSideDisplayBlockNumber:
     
-    def __init__(self, spritePosition: tuple[int, int], spriteType: str, colorRGBValue: tuple[int, int, int], configFile: ConfigParser) -> None:
+    def __init__(self, spritePosition: tuple[int, int], spriteType: str, colorRGBValue: tuple[int, int, int]) -> None:
+        
         self.spritePosition = spritePosition
         self.spriteType = spriteType   # config.ini variable
         self.colorRGBValue = colorRGBValue
-        self.configFile = configFile
-        configFileValue = self.configFile.getint("numbervalues", self.spriteType)
+        configFileValue = CONFIGPARSER.getint("numberValues", self.spriteType)
         self.spriteValue = "{:02d}".format(configFileValue) if self.spriteType == "interval" else "{:02d}".format(configFileValue//60)
 
-        self.displayImage = pygame.Surface((63, 32), pygame.SRCALPHA).convert_alpha()
+        self.displayImage = pygame.Surface((63, 32), pygame.SRCALPHA)
         pygame.draw.rect(self.displayImage, self.colorRGBValue, (0, 0, 10, 32))
 
-        self.SecondSideDisplayNumber0 = SecondSideDisplayNumber((self.spritePosition[0]+31, self.spritePosition[1]+16), COLOR_BACKGROUND, 30, int(self.spriteValue[0]))
-        self.SecondSideDisplayNumber1 = SecondSideDisplayNumber((self.spritePosition[0]+47, self.spritePosition[1]+16), COLOR_BACKGROUND, 30, int(self.spriteValue[1]))
+        self.SecondSideDisplayNumber0 = SecondSideDisplayNumber((self.spritePosition[0] + 31, self.spritePosition[1] + 16), COLOR_BACKGROUND, 30, int(self.spriteValue[0]))
+        self.SecondSideDisplayNumber1 = SecondSideDisplayNumber((self.spritePosition[0] + 47, self.spritePosition[1] + 16), COLOR_BACKGROUND, 30, int(self.spriteValue[1]))
 
     def render(self, displayWindow: pygame.Surface) -> None:
         pygame.draw.rect(self.displayImage, COLOR_SECONDARY, (15, 0, 48, 32))
@@ -194,10 +192,10 @@ class SecondSideDisplayBlockNumber:
 
     def saveChangesToConfigFile(self) -> None:
         saveValue = str(self.SecondSideDisplayNumber0.spriteValue * 10 + self.SecondSideDisplayNumber1.spriteValue) if self.spriteType == "interval" else str(self.SecondSideDisplayNumber0.spriteValue * 600 + self.SecondSideDisplayNumber1.spriteValue * 60)
-        self.configFile.set("numberValues", self.spriteType, saveValue)
+        CONFIGPARSER.set("numberValues", self.spriteType, saveValue)
 
     def resetConfigFileToDefault(self) -> None:
-        configFileValue = self.configFile.getint("numberValues", self.spriteType) if self.spriteType == "interval" else self.configFile.getint("numberValues", self.spriteType)//60
+        configFileValue = CONFIGPARSER.getint("numberValues", self.spriteType) if self.spriteType == "interval" else CONFIGPARSER.getint("numberValues", self.spriteType)//60
         self.spriteValue = "{:02d}".format(configFileValue)
         for (index, SecondSideDisplayNumberObject) in enumerate((self.SecondSideDisplayNumber0, self.SecondSideDisplayNumber1)):
             SecondSideDisplayNumberObject.spriteValue = int(self.spriteValue[index])
@@ -211,14 +209,13 @@ class SecondSideDisplayBlockNumber:
     
 class SecondSideDisplayBlockBool:
 
-    def __init__(self, spritePosition: tuple[int, int], spriteType: str, colorRGBValue: tuple[int, int, int], configFile: ConfigParser) -> None:
+    def __init__(self, spritePosition: tuple[int, int], spriteType: str, colorRGBValue: tuple[int, int, int]) -> None:
         self.spritePosition = spritePosition
         self.spriteType = spriteType
         self.colorRGBValue = colorRGBValue
-        self.configFile = configFile
-        self.spriteValue = self.configFile.getint("boolValues", self.spriteType)
+        self.spriteValue = CONFIGPARSER.getint("boolValues", self.spriteType)
 
-        self.displayImage = pygame.Surface((63, 32), pygame.SRCALPHA).convert_alpha()
+        self.displayImage = pygame.Surface((63, 32), pygame.SRCALPHA)
         pygame.draw.rect(self.displayImage, self.colorRGBValue, (0, 0, 10, 32))
 
         self.isAllChangesReset = True
@@ -234,10 +231,10 @@ class SecondSideDisplayBlockBool:
             self.isAllChangesReset = False
 
     def saveChangesToConfigFile(self) -> None:
-        self.configFile.set("boolValues", self.spriteType, str(self.spriteValue))
+        CONFIGPARSER.set("boolValues", self.spriteType, str(self.spriteValue))
 
     def resetConfigFileToDefault(self) -> None:
-        self.spriteValue = self.configFile.getint("boolValues", self.spriteType)
+        self.spriteValue = CONFIGPARSER.getint("boolValues", self.spriteType)
 
     def resetChangesIfNotSaved(self) -> None:
         if not self.isAllChangesReset:
@@ -247,12 +244,11 @@ class SecondSideDisplayBlockBool:
 
 class SecondSideSaveButton:
 
-    def __init__(self, spritePosition: tuple[int, int], colorRGBValue: tuple[int, int, int], configFile: ConfigParser) -> None:
+    def __init__(self, spritePosition: tuple[int, int], colorRGBValue: tuple[int, int, int]) -> None:
         self.spritePosition = spritePosition
         self.colorRGBValue = colorRGBValue
-        self.configFile = configFile
 
-        self.displayImage = pygame.Surface((32, 32), pygame.SRCALPHA).convert_alpha()
+        self.displayImage = pygame.Surface((32, 32), pygame.SRCALPHA)
         pygame.draw.rect(self.displayImage, self.colorRGBValue, (10, 0, 12, 11.5))
         pygame.draw.rect(self.displayImage, self.colorRGBValue, (3, 29, 26, 3))
         gfxdraw.aapolygon(self.displayImage, ((3, 11.5), (16, 24.5), (29, 11.5)), self.colorRGBValue)
@@ -270,18 +266,16 @@ class SecondSideSaveButton:
                 SecondSideDisplayBlockBool.saveChangesToConfigFile()
 
             with open(CONFIG_PATH, "w") as modifiedConfigFile:
-                self.configFile.write(modifiedConfigFile)
+                CONFIGPARSER.write(modifiedConfigFile)
 
 
 class SecondSideResetButton:
 
-    def __init__(self, spritePosition: tuple[int, int], colorRGBValue: tuple[int, int, int], configFile: ConfigParser) -> None:
+    def __init__(self, spritePosition: tuple[int, int], colorRGBValue: tuple[int, int, int]) -> None:
         self.spritePosition = spritePosition
         self.colorRGBValue = colorRGBValue
 
-        self.configFile = configFile
-
-        self.displayImage = pygame.Surface((32, 32), pygame.SRCALPHA).convert_alpha()
+        self.displayImage = pygame.Surface((32, 32), pygame.SRCALPHA)
         pygame.draw.rect(self.displayImage, self.colorRGBValue, (10, 1.5, 12, 2))
         pygame.draw.rect(self.displayImage, self.colorRGBValue, (3, 3.5, 26, 3.5))
         pygame.draw.rect(self.displayImage, self.colorRGBValue, (5, 8.5, 22, 22))
@@ -290,18 +284,21 @@ class SecondSideResetButton:
         return displayWindow.blit(self.displayImage, self.spritePosition)
 
     def isMouseRightClicked(self, displayWindow: pygame.Surface, event: pygame.event.Event, currentMousePosition: tuple[int, int], SecondSideDisplayBlockNumbers: tuple[SecondSideDisplayBlockNumber], SecondSideDisplayBlockBools: tuple[SecondSideDisplayBlockBool]) -> None:
+
         if all((event.type == MOUSEBUTTONDOWN, event.button == 1, self.render(displayWindow).collidepoint(currentMousePosition))):
 
-            self.configFile.clear()
-            self.configFile.add_section("numberValues")
+            CONFIGPARSER.clear()
+
+            CONFIGPARSER.add_section("numberValues")
             for configFileOption in tuple(CONFIG_DEFAULT_VALUES.keys())[0:4]:
-                self.configFile.set("numbervalues", configFileOption, CONFIG_DEFAULT_VALUES[configFileOption])
-            self.configFile.add_section("boolValues")
+                CONFIGPARSER.set("numbervalues", configFileOption, CONFIG_DEFAULT_VALUES[configFileOption])
+
+            CONFIGPARSER.add_section("boolValues")
             for configFileOption in tuple(CONFIG_DEFAULT_VALUES.keys())[4:6]:
-                self.configFile.set("boolValues", configFileOption, CONFIG_DEFAULT_VALUES[configFileOption])
+                CONFIGPARSER.set("boolValues", configFileOption, CONFIG_DEFAULT_VALUES[configFileOption])
 
             with open(CONFIG_PATH, "w") as modifiedConfigFile:
-                self.configFile.write(modifiedConfigFile)
+                CONFIGPARSER.write(modifiedConfigFile)
 
             for SecondSideDisplayBlockNumber in SecondSideDisplayBlockNumbers:
                 SecondSideDisplayBlockNumber.resetConfigFileToDefault()
